@@ -1,0 +1,39 @@
+---
+title: "Data Imputation and Cleaning of Property Values"
+output: html_notebook
+---
+
+```{r}
+#0. read in data and library -----------------------------------------------------------
+path <- "~/PetGit/ImputationClusterAnalysis/"
+setwd(path)
+
+library(data.table)
+library(reshape2)
+library(plyr)
+library(stringr)
+library(Amelia)
+library(Rcpp) 
+library(DMwR2) # pkg impute missing values from median/mode of k nearest neighbors
+library(ggplot2)
+
+
+
+data.url<-"https://raw.githubusercontent.com/EGjohnson/ImputationClusterAnalysis/7959de2efcf1e264daf8dad2b604e6718d411409/Sales_new.txt"
+prop.sale <- fread(data.url,na.strings = c(""," ",NA,"NA"))
+```
+### 1. Examine Data
+```{r}
+head(prop.sale)
+```
+
+
+### 2. inspect data type and distribution
+```{r}
+line<-function(x){paste(replicate(x, "="), collapse = "")}
+for(i,j){}
+summary(data.frame(prop.sale[,i:j]))
+```
+
+
+
