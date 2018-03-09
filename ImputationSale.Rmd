@@ -68,5 +68,10 @@ geom_histogram(bins=my.bins,fill=my.col[2])+xlim(c(min.val,max.val))
 ```
 
 ```{r}
-saveRDS(prop.sale,"prop.sale.rds")
+saveRDS(prop.sale,"propsale.rds")
+```
+
+
+```{r}
+readRDS("propsale.rds")
 ```
