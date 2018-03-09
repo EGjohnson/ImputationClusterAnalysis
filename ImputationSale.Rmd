@@ -7,20 +7,21 @@ output: html_notebook
 #0. read in data and library -----------------------------------------------------------
 path <- "~/PetGit/ImputationClusterAnalysis/"
 setwd(path)
-
 library(data.table)
 library(reshape2)
-library(plyr)
 library(stringr)
 library(Amelia)
 library(Rcpp) 
 library(DMwR2) # pkg impute missing values from median/mode of k nearest neighbors
 library(ggplot2)
+library(Rcpp)
+library(plyr)
+```
 
-
-
+```{r}
 data.url<-"https://raw.githubusercontent.com/EGjohnson/ImputationClusterAnalysis/7959de2efcf1e264daf8dad2b604e6718d411409/Sales_new.txt"
-prop.sale <- fread(data.url,na.strings = c(""," ",NA,"NA"))
+#prop.sale <- fread(data.url,na.strings = c(""," ",NA,"NA"))
+prop.sale<-fread("Sales_new.txt" ,na.strings = c(""," ",NA,"NA"))
 ```
 ### 1. Examine Data
 ```{r}
@@ -28,12 +29,44 @@ head(prop.sale)
 ```
 
 
-### 2. inspect data type and distribution
+### 2. write summary function for easy display
 ```{r}
 line<-function(x){paste(replicate(x, "="), collapse = "")}
-for(i,j){}
-summary(data.frame(prop.sale[,i:j]))
+
+sum.funct<-function(i,j,n){
+  print(summary(data.frame(prop.sale[,i:j])))
+  print(line(n))}
 ```
 
+### 3. Convert datatypes,drop unwanted data and rename columns.
+```{r}
+prop.sale <- subset(prop.sale, select = -c(SALE_PK,AUT_SNAPSHOT_DATE,VCS,DIST,SALE_PRICE_SOURCE,SEQ) )
+
+```
+
+```{r}
+factor.this<-c("SALE_TYPE","STORY_HEIGHT")
+prop.sale[,c(3,6)]<-lapply(prop.sale[,c(3,6)], as.factor) #categorical variables to factor
+prop.sale[,c(4,5,7)]<-lapply(prop.sale[,c(4,5,7)], as.numeric) #categorical variables to factor
+prop.sale[,8]<-as.Date(prop.sale$SALE_DATE)
+prop.sale$sale.years<-as.numeric((prop.sale$SALE_DATE-min(prop.sale$SALE_DATE)))/365
+```
+
+```{r}
+sum.funct(1,4,150)
+sum.funct(5,9,150)
+```
+```{r}
+my.bins<-60
+min.val<-100000
+max.val<-300000
+my.col<-c("PRICE","darkgreen")
+
+prop.sale.sub<-subset(prop.sale,PRICE>min.val & PRICE<max.val)
+ggplot(data=prop.sale.sub,aes_string(my.col[1])) + 
+geom_histogram(bins=my.bins,fill=my.col[2])+xlim(c(min.val,max.val))
+```
+
+```
 
 
