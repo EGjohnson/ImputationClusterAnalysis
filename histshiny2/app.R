@@ -1,8 +1,9 @@
 library(shiny)
 library(ggplot2)
 prop.sale<-readRDS("data/propsale.rds")
+my.names<-names(prop.sale)
+my.colors<-rainbow(length(my.names))
 
-my.col<-c("PRICE","darkgreen")
 
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
@@ -72,8 +73,8 @@ server <- function(input, output) {
   #    re-executed when inputs (input$bins) change
   # 2. Its output type is a plot
   output$distPlot <- renderPlot({
-    ggplot(prop.sale.sub(),aes_string("PRICE")) + 
-      geom_histogram(bins=input$bins,fill=my.col[2])+
+    ggplot(prop.sale.sub(),aes_string(my.names[as.integer(input$prop.col)])) + 
+      geom_histogram(bins=input$bins,fill=my.colors[as.integer(input$prop.col)])+
       xlim(c(min.val.col(),max.val.col()))+
       ggtitle(typeof(input$prop.col))
     })
