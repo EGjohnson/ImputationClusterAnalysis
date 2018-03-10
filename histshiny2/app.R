@@ -2,15 +2,13 @@ library(shiny)
 library(ggplot2)
 prop.sale<-readRDS("data/propsale.rds")
 
-
-
 my.col<-c("PRICE","darkgreen")
 
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
   
   # App title >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  titlePanel("Hello Shiny!"),
+  titlePanel("Property Value Histograms"),
   
   # Sidebar layout with input and output definitions ----
   #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -32,16 +30,16 @@ ui <- fluidPage(
       
       sliderInput(inputId = "min.val",
                   label = "min value of histogram:",
-                  min = 150000,
-                  max = 500000,
-                  value =100000),
+                  min = 0,
+                  max = 1.0,
+                  value =0.0),
      
     
       sliderInput(inputId = "max.val",
                 label = "max value of histogram:",
-                min = 150000,
-                max = 500000,
-                value =160000)
+                min = 0.0,
+                max = 1.0,
+                value =1.0)
     ),
     #----------------------------------------------------------------------------
   #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -58,11 +56,12 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
   
-  
-  prop.sale.sub<-reactive({subset(prop.sale,PRICE>input$min.val & PRICE<input$max.val)})
-  
-  # Histogram of the Old Faithful Geyser Data ----
-  # with requested number of bins
+  #figure out what the max and min values will be given the slider window
+  min.val.col<-reactive({max(prop.sale[,my.col[1]])*input$min.val})
+  max.val.col<-reactive({max(prop.sale[,my.col[1]])*input$max.val})
+  #subset the data frame to include only the range of the column we are interested in displaying
+  prop.sale.sub<-reactive({subset(prop.sale,PRICE>=min.val.col() & PRICE<=max.val.col())})
+
   # This expression that generates a histogram is wrapped in a call
   # to renderPlot to indicate that:
   #
@@ -71,7 +70,8 @@ server <- function(input, output) {
   # 2. Its output type is a plot
   output$distPlot <- renderPlot({
     ggplot(prop.sale.sub(),aes_string(my.col[1])) + 
-      geom_histogram(bins=input$bins,fill=my.col[2])+xlim(c(input$min.val,input$max.val))
+      geom_histogram(bins=input$bins,fill=my.col[2])+
+      xlim(c(min.val.col(),max.val.col()))
     })
   
 }
