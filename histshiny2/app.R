@@ -60,7 +60,10 @@ server <- function(input, output) {
   min.val.col<-reactive({max(prop.sale[,my.col[1]])*input$min.val})
   max.val.col<-reactive({max(prop.sale[,my.col[1]])*input$max.val})
   #subset the data frame to include only the range of the column we are interested in displaying
-  prop.sale.sub<-reactive({subset(prop.sale,PRICE>=min.val.col() & PRICE<=max.val.col())})
+  #prop.sale.sub<-reactive({subset(prop.sale,PRICE>=min.val.col() & PRICE<=max.val.col())})
+  prop.sale.sub<-reactive({ 
+    prop.sale[prop.sale[,7]>=min.val.col() &  prop.sale[,7]<=max.val.col(), ] 
+              })
 
   # This expression that generates a histogram is wrapped in a call
   # to renderPlot to indicate that:
