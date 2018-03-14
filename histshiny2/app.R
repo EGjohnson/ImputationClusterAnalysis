@@ -5,6 +5,7 @@ library(grid)
 library(ggthemes)
 prop.sale.raw<-readRDS("data/propsale.rds")
 prop.sale<-prop.sale.raw[,sapply(prop.sale.raw, is.numeric)]
+prop.sale.factor<-prop.sale.raw[,sapply(prop.sale.raw,is.factor)]
 summary.prop<-summary(subset(prop.sale,select=-c(REID,sale.years)))
 #===============================================================
 min.vec<-unname(sapply(prop.sale,function(x){min(x,na.rm=TRUE)}))
@@ -14,6 +15,9 @@ my.names<-names(prop.sale)
 my.colors<-rainbow(length(my.names))
 my.index<-1:length(my.names)
 #================================================================
+prop.sale<-cbind(prop.sale,prop.sale.factor)
+#atest<-prop.sale[prop.sale$SALE_TYPE=="LAND & BLDG(S)",]
+
 theme_Publication <- function(base_size=25, base_family="helvetica") {
 
   (theme_foundation(base_size=base_size, base_family=base_family)
@@ -118,6 +122,7 @@ server <- function(input, output) {
   output$distPlot <- renderPlot({
     ggplot(prop.sale.sub(),aes_string(my.names[as.integer(input$prop.col)])) + 
       geom_histogram(bins=input$bins,fill=my.colors[as.integer(input$prop.col)])+
+      geom_histogram(bins=input$bins)+
       xlim(c(min.val.col(),max.val.col()))+
       ggtitle(max.vec[as.integer(input$prop.col)])+
       theme_Publication()
