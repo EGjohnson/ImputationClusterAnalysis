@@ -1,0 +1,12 @@
+name: histshiny2
+title: histshiny2
+username:
+account: databluebird
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 300114
+bundleId: 1270569
+url: https://databluebird.shinyapps.io/histshiny2/
+when: 1521137713.3322
+asMultiple: FALSE
+asStatic: FALSE

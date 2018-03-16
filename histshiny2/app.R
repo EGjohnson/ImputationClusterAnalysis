@@ -84,7 +84,12 @@ ui <- fluidPage(
                 label = "max value of histogram:",
                 min = 0.0,
                 max = 1.0,
-                value =0.50)
+                value =0.50),
+    
+    # Input: Selector for choosing dataset ----
+    selectInput(inputId = "property_type",
+                label = "Choose Property Type",
+                choices = c("Property", "Property and Building","Both"))
     ),
     #----------------------------------------------------------------------------
   #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -104,6 +109,7 @@ ui <- fluidPage(
 )
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
+  # c
   #figure out what the max and min values will be given the slider window
   min.val.col<-reactive({ min.vec[as.integer(input$prop.col)]+input$min.val*my.diff[as.integer(input$prop.col)]  })
   max.val.col<-reactive({ min.vec[as.integer(input$prop.col)]+input$max.val*my.diff[as.integer(input$prop.col)] })
