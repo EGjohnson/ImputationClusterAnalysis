@@ -6,17 +6,24 @@ library(ggthemes)
 prop.sale.raw<-readRDS("data/propsale.rds")
 prop.sale<-prop.sale.raw[,sapply(prop.sale.raw, is.numeric)]
 prop.sale.factor<-prop.sale.raw[,sapply(prop.sale.raw,is.factor)]
-summary.prop<-summary(subset(prop.sale,select=-c(REID,sale.years)))
+prop.sale<-cbind(prop.sale,prop.sale.factor)
+
+#Pregenerate data sets
+#==============================================================
+dat.build<-subset(prop.sale,SALE_TYPE=="LAND & BLDG(S)")
+dat.land<-subset(prop.sale,SALE_TYPE=="LAND ONLY")
+dat.both<-prop.sale
+#==============================================================
+
 #===============================================================
-min.vec<-unname(sapply(prop.sale,function(x){min(x,na.rm=TRUE)}))
-max.vec<-unname(sapply(prop.sale,function(x){max(x,na.rm=TRUE)}))
+num.dat<-dat.both[1:4]
+min.vec<-unname(sapply(num.dat,function(x){min(x,na.rm=TRUE)}))
+max.vec<-unname(sapply(num.dat,function(x){max(x,na.rm=TRUE)}))
 my.diff<-max.vec-min.vec
-my.names<-names(prop.sale)
+my.names<-names(num.dat)
 my.colors<-rainbow(length(my.names))
 my.index<-1:length(my.names)
 #================================================================
-prop.sale<-cbind(prop.sale,prop.sale.factor)
-#atest<-prop.sale[prop.sale$SALE_TYPE=="LAND & BLDG(S)",]
 
 theme_Publication <- function(base_size=25, base_family="helvetica") {
 
@@ -62,7 +69,7 @@ ui <- fluidPage(
     # Sidebar panel for inputs ----
     sidebarPanel(
     #----------------------------------------------------------------------------------
-      selectInput('prop.col', 'Property Characteristic', c("Year Built" =2.0, "Building Size"=3.0,"Price"=4.0)),
+      selectInput('prop.col', 'Property Characteristic', c("Price"=4.0,"Year Built" =2.0, "Building Size"=3.0)),
     
       # Input: Slider for the number of bins ----
       sliderInput(inputId = "bins",
@@ -84,12 +91,12 @@ ui <- fluidPage(
                 label = "max value of histogram:",
                 min = 0.0,
                 max = 1.0,
-                value =0.50),
+                value =0.20),
     
     # Input: Selector for choosing dataset ----
-    selectInput(inputId = "property_type",
+    selectInput(inputId = "dat",
                 label = "Choose Property Type",
-                choices = c("Property", "Property and Building","Both"))
+                choices = c("Both", "Property and Building","Property"))
     ),
     #----------------------------------------------------------------------------
   #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -101,21 +108,43 @@ ui <- fluidPage(
       plotOutput(outputId = "distPlot"),
       
       # Output: Header + summary of distribution ----
-      h4("Summary"),
-      verbatimTextOutput("summary")
+      h4("Summary of Values"),
+      verbatimTextOutput("summary"),
+      
+      # Output: Header + summary of distribution ----
+      h4("Summary of Characteristics"),
+      verbatimTextOutput("summary2")
       
     )
   )
 )
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
-  # c
+#Choose Data Set
+  dati<- reactive({
+    #c("Property", "Property and Building","Both")
+    switch(input$dat,
+           "Both" = dat.both,
+           "Property" = dat.land,
+           "Property and Building" = dat.build
+           )
+  })
+  
+  #Choose Data Set
+  color.hist<- reactive({
+    #c("Property", "Property and Building","Both")
+    switch(input$dat,
+           "Both" = "darkgray",
+           "Property" = "darkgreen",
+           "Property and Building" = "darkred"
+    )
+  })
   #figure out what the max and min values will be given the slider window
   min.val.col<-reactive({ min.vec[as.integer(input$prop.col)]+input$min.val*my.diff[as.integer(input$prop.col)]  })
   max.val.col<-reactive({ min.vec[as.integer(input$prop.col)]+input$max.val*my.diff[as.integer(input$prop.col)] })
   #subset the data frame to include only the range of the column we are interested in displaying
   prop.sale.sub<-reactive({ 
-    prop.sale[prop.sale[,as.integer(input$prop.col)]>=min.val.col() &  prop.sale[,as.integer(input$prop.col)]<=max.val.col(), ] 
+    dati()[dati()[,as.integer(input$prop.col)]>=min.val.col() &  dati()[,as.integer(input$prop.col)]<=max.val.col(), ] 
               })
   
   # This expression that generates a histogram is wrapped in a call
@@ -127,18 +156,22 @@ server <- function(input, output) {
   #*********************************************************************************
   output$distPlot <- renderPlot({
     ggplot(prop.sale.sub(),aes_string(my.names[as.integer(input$prop.col)])) + 
-      geom_histogram(bins=input$bins,fill=my.colors[as.integer(input$prop.col)])+
-      geom_histogram(bins=input$bins)+
+      theme_Publication()+
+      geom_histogram(bins=input$bins,fill=color.hist())+
       xlim(c(min.val.col(),max.val.col()))+
-      ggtitle(max.vec[as.integer(input$prop.col)])+
-      theme_Publication()
+      ggtitle(input$dat)
     })
   #**********************************************************************************
   
   # Generate a summary of the dataset ----
   output$summary <- renderPrint({
-    #dataset <- datasetInput()
-    summary.prop
+    dataset <- dati()
+    summary(dataset[1:4])
+  })
+  
+  output$summary2 <- renderPrint({
+    dataset <- dati()
+    summary(dataset[6:7])
   })
   
 }
