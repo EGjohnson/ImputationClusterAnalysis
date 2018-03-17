@@ -3,7 +3,8 @@ title: "Data Imputation and Cleaning of Property Values"
 output: html_notebook
 ---
 
-```{r}
+
+```{r,echo=FALSE}
 #0. read in data and library -----------------------------------------------------------
 path <- "~/PetGit/ImputationClusterAnalysis/"
 setwd(path)
@@ -18,43 +19,83 @@ library(Rcpp)
 library(plyr)
 ```
 
+
+
 ```{r}
+# summary function for easy display of data
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+line<-function(x){paste(replicate(x, "="), collapse = "")}
+
+sum.funct<-function(my.df,i,j,n){
+  print(summary(data.frame(my.df[,i:j])))
+  print(line(n))}
+```
+
+```{r echo=FALSE, message=FALSE,echo=FALSE, warning=FALSE, message=FALSE}
+# Import data
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 data.url<-"https://raw.githubusercontent.com/EGjohnson/ImputationClusterAnalysis/7959de2efcf1e264daf8dad2b604e6718d411409/Sales_new.txt"
 #prop.sale <- fread(data.url,na.strings = c(""," ",NA,"NA"))
-prop.sale<-fread("Sales_new.txt" ,na.strings = c(""," ",NA,"NA"))
+prop.sale<-fread("property_data/Sales_new.txt",na.strings = c(""," ",NA,"NA"))
+prop.recs<-fread("property_data/Parcels_new.txt")
 ```
-### 1. Examine Data
-```{r}
+
+### 1. About The Two Data Sets Used in the Analysis
+All records were imported from
+http://hendersoncountync.org/gis/download_realproperty.html
+
+#### Sales_new.txt 
+This database file contains property sale records over the last decade. These records including information such as building size, year of the build, what the property was sold for and when. It contains `r dim(prop.sale)[1]` property sale records.
+```{r, echo=FALSE}
 head(prop.sale)
 ```
 
 
-### 2. write summary function for easy display
-```{r}
-line<-function(x){paste(replicate(x, "="), collapse = "")}
-
-sum.funct<-function(i,j,n){
-  print(summary(data.frame(prop.sale[,i:j])))
-  print(line(n))}
+#### Parcels_new.txt 
+This database file contains parcel records over the last decade. These records including information such as zoning, tax assessed value, neighborhood and acreage. It contains `r dim(prop.recs)[1]` parcel records.
+```{r, echo=FALSE}
+head(prop.recs)
 ```
 
-### 3. Convert datatypes,drop unwanted data and rename columns.
-```{r}
-prop.sale <- subset(prop.sale, select = -c(SALE_PK,AUT_SNAPSHOT_DATE,VCS,DIST,SALE_PRICE_SOURCE,SEQ) )
+Keep REID, FIRE_DISTRICT, LAND_CLASS,CALCULATED_ACRES,ZONING,ETJ,PHYADDR_CITY,PHYADDR_ZIP,TOTAL_LAND_VALUE_ASSESSED,TOTAL_BLDG_VALUE_ASSESSED,LAND_USE_VALUE,TOTAL_PROP_VALUE,COST_TOTAL_VALUE,NEIGHBORHOOD,LOCATION_ADDR
 
+
+
+### Summary of Merged Data
+
+Need to figure out what to do with data that says "other" in factors as well as outliers in numerical data.
+```{r,echo=FALSE}
+# Drop unwanted data
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+keep.recs.vec<-c("REID", "FIRE_DISTRICT", "LAND_CLASS","CALCULATED_ACRES","ZONING","ETJ","PHYADDR_CITY","PHYADDR_ZIP","TOTAL_LAND_VALUE_ASSESSED","TOTAL_BLDG_VALUE_ASSESSED","LAND_USE_VALUE","TOTAL_PROP_VALUE","COST_TOTAL_VALUE","NEIGHBORHOOD","LOCATION_ADDR")
+prop.sale <- data.frame(subset(prop.sale, select = -c(SALE_PK,AUT_SNAPSHOT_DATE,VCS,DIST,SALE_PRICE_SOURCE,SEQ) ))
+prop.recs<-data.frame(subset(prop.recs,select=keep.recs.vec))
 ```
 
-```{r}
+```{r,echo=FALSE}
+# Convert datatypes
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 factor.this<-c("SALE_TYPE","STORY_HEIGHT")
 prop.sale[,c(3,6)]<-lapply(prop.sale[,c(3,6)], as.factor) #categorical variables to factor
 prop.sale[,c(4,5,7)]<-lapply(prop.sale[,c(4,5,7)], as.numeric) #categorical variables to factor
 prop.sale[,8]<-as.Date(prop.sale$SALE_DATE)
 prop.sale$sale.years<-as.numeric((prop.sale$SALE_DATE-min(prop.sale$SALE_DATE)))/365
+
+factor.this<-c(2,3,6,7,8,14)
+numeric.this<-c(1,4,9,10,11,12,13)
+character.this<-c(5,15)
+prop.recs[,factor.this]<-lapply(prop.recs[,factor.this],as.factor)
+prop.recs[,numeric.this]<-lapply(prop.recs[,numeric.this],as.numeric)
+prop.recs[,character.this]<-lapply(prop.recs[,character.this],as.character)
 ```
 
 ```{r}
-sum.funct(1,4,150)
-sum.funct(5,9,150)
+sum.funct(prop.sale,1,4,150)
+sum.funct(prop.sale,5,9,150)
+sum.funct(prop.recs,1,4,150)
+sum.funct(prop.recs,5,dim(prop.recs)[2]/2,150)
+sum.funct(prop.recs,dim(prop.recs)[2]/2,dim(prop.recs)[2],150)
 ```
 ```{r}
 my.bins<-60
@@ -77,6 +118,7 @@ We can see in the below tabplot that (as is to be expected) we have missing valu
 library(tabplot)
 tableplot(prop.sale,select=c(PRICE,SALE_TYPE,YEAR_BUILT,STORY_HEIGHT,BLDG_SIZE,SALE_DATE),sortCol=SALE_TYPE)
 ```
+
 ```{r Fig1, echo=TRUE, fig.height=8, fig.width=10}
 tab.prop.dat<-subset(prop.sale,SALE_TYPE!="LAND ONLY")
 tableplot(tab.prop.dat,select=c(PRICE,SALE_TYPE,YEAR_BUILT,STORY_HEIGHT,BLDG_SIZE,SALE_DATE),sortCol=BLDG_SIZE,from=0,to=100)
