@@ -71,7 +71,14 @@ geom_histogram(bins=my.bins,fill=my.col[2])+xlim(c(min.val,max.val))
 saveRDS(prop.sale,"propsale.rds")
 ```
 
-
-```{r}
-readRDS("propsale.rds")
+We can see in the below tabplot that (as is to be expected) we have missing values in YEAR_BUILT, STORY_HEIGHT AND BLDGE_SIZE for the LAND ONLY category in SALE_TYPE.
+```{r Fig2, echo=TRUE, fig.height=5, fig.width=10}
+#readRDS("propsale.rds)
+library(tabplot)
+tableplot(prop.sale,select=c(PRICE,SALE_TYPE,YEAR_BUILT,STORY_HEIGHT,BLDG_SIZE,SALE_DATE),sortCol=SALE_TYPE)
 ```
+```{r Fig1, echo=TRUE, fig.height=8, fig.width=10}
+tab.prop.dat<-subset(prop.sale,SALE_TYPE!="LAND ONLY")
+tableplot(tab.prop.dat,select=c(PRICE,SALE_TYPE,YEAR_BUILT,STORY_HEIGHT,BLDG_SIZE,SALE_DATE),sortCol=BLDG_SIZE,from=0,to=100)
+```
+
